@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertUserSchema, insertRewardSchema } from "@shared/schema";
 import { z } from "zod";
 import { generateImageHash, generateDeviceFingerprint, extractImageMetadata, validateLocationAccuracy } from "./utils/crypto";
+import { publicBlockchain } from "./blockchain/publicChain";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // User registration
@@ -69,7 +70,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         validationProof
       };
 
-      // Blockchain validation
+      // Public blockchain fraud prevention check
+      const publicChainResult = await publicBlockchain.registerReading(
+        rewardData.vehicleNumber,
+        rewardData.km,
+        new Date(),
+        'GreenKarma-v1.0'
+      );
+
+      if (!publicChainResult.success) {
+        return res.status(400).json({ 
+          message: "Cross-app fraud detected: " + publicChainResult.error,
+          fraudAlert: true,
+          crossAppDuplicate: true
+        });
+      }
+
+      // Local blockchain validation
       const blockchainResult = await storage.validateOdometerReading(
         rewardData.vehicleNumber,
         rewardData.km,
@@ -80,7 +97,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ 
           message: "Fraud detected: " + blockchainResult.fraudAlert,
           fraudAlert: true,
-          blockchainSummary: await storage.getBlockchainSummary(rewardData.vehicleNumber)
+          localFraud: true
         });
       }
       
@@ -102,7 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...rewardData,
         co2Saved,
         rewardGiven: rewardAmount,
-        txHash: blockchainResult.blockHash || `0x${Math.random().toString(16).substr(2, 40)}`,
+        txHash: publicChainResult.txHash || `0x${Math.random().toString(16).substr(2, 40)}`,
         blockHash: blockchainResult.blockHash,
         deviceFingerprint,
         imageHash,
@@ -112,8 +129,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         reward,
         blockchain: {
-          blockHash: blockchainResult.blockHash,
+          publicTxHash: publicChainResult.txHash,
+          localBlockHash: blockchainResult.blockHash,
           verified: true,
+          crossAppProtected: true,
           fraudScore: 0
         }
       });
@@ -185,60 +204,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get blockchain summary for a vehicle
-  app.get("/api/blockchain/:vehicleNumber", async (req, res) => {
+  // Admin endpoint to check public blockchain network status
+  app.get("/api/admin/blockchain-status", async (req, res) => {
     try {
-      const { vehicleNumber } = req.params;
-      
-      const user = await storage.getUserByVehicleNumber(vehicleNumber);
-      if (!user) {
-        return res.status(404).json({ message: "Vehicle not found" });
-      }
-
-      const blockchainSummary = await storage.getBlockchainSummary(vehicleNumber);
-      res.json({ blockchainSummary });
+      const networkStatus = publicBlockchain.getNetworkStatus();
+      res.json({ networkStatus });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
-  // Verify blockchain integrity for a vehicle
-  app.post("/api/blockchain/verify/:vehicleNumber", async (req, res) => {
+  // Verify a transaction on public blockchain
+  app.get("/api/verify-transaction/:txHash", async (req, res) => {
     try {
-      const { vehicleNumber } = req.params;
-      
-      const user = await storage.getUserByVehicleNumber(vehicleNumber);
-      if (!user) {
-        return res.status(404).json({ message: "Vehicle not found" });
-      }
-
-      const blockchainSummary = await storage.getBlockchainSummary(vehicleNumber);
-      if (!blockchainSummary) {
-        return res.status(404).json({ message: "No blockchain found" });
-      }
-
-      res.json({ 
-        verified: blockchainSummary.chainIntegrity.isValid,
-        errors: blockchainSummary.chainIntegrity.errors,
-        summary: blockchainSummary
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Get global fraud database entries for a vehicle (admin endpoint)
-  app.get("/api/admin/fraud-check/:vehicleNumber", async (req, res) => {
-    try {
-      const { vehicleNumber } = req.params;
-      // This would query the global fraud database
-      // For demo purposes, return mock data
-      res.json({
-        vehicleNumber,
-        globalEntries: [],
-        riskLevel: "LOW",
-        crossAppDuplicates: false
-      });
+      const { txHash } = req.params;
+      const verification = await publicBlockchain.verifyTransaction(txHash);
+      res.json(verification);
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
     }

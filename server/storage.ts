@@ -28,6 +28,18 @@ export interface IStorage {
     fraudAlert?: string;
   }>;
   getBlockchainSummary(vehicleNumber: string): Promise<any>;
+
+  // Global fraud database operations
+  storeGlobalFraudEntry(entry: {
+    vehicleNumber: string;
+    reading: number;
+    appSource: string;
+    blockchainTxHash: string;
+    timestamp: Date;
+    readingHash: string;
+  }): Promise<void>;
+  getGlobalFraudEntry(readingHash: string): Promise<any>;
+  getGlobalFraudEntryByTxHash(txHash: string): Promise<any>;
 }
 
 export class MemStorage implements IStorage {
@@ -302,6 +314,40 @@ export class DatabaseStorage implements IStorage {
     }
 
     return { totalBalance, totalCo2Saved, monthlyReward, totalDistance };
+  }
+
+  async storeGlobalFraudEntry(entry: {
+    vehicleNumber: string;
+    reading: number;
+    appSource: string;
+    blockchainTxHash: string;
+    timestamp: Date;
+    readingHash: string;
+  }): Promise<void> {
+    await db.insert(globalFraudDatabase).values({
+      vehicleNumber: entry.vehicleNumber,
+      odometerReading: entry.reading,
+      appSource: entry.appSource,
+      blockHash: entry.blockchainTxHash,
+      appSignature: entry.readingHash,
+      timestamp: entry.timestamp
+    });
+  }
+
+  async getGlobalFraudEntry(readingHash: string): Promise<any> {
+    const [entry] = await db
+      .select()
+      .from(globalFraudDatabase)
+      .where(eq(globalFraudDatabase.appSignature, readingHash));
+    return entry || null;
+  }
+
+  async getGlobalFraudEntryByTxHash(txHash: string): Promise<any> {
+    const [entry] = await db
+      .select()
+      .from(globalFraudDatabase)
+      .where(eq(globalFraudDatabase.blockHash, txHash));
+    return entry || null;
   }
 }
 
