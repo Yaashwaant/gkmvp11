@@ -1,0 +1,64 @@
+{
+  "header": {
+    "appName": "ग्रीन कर्मा"
+  },
+  "wallet": {
+    "currentBalance": "वर्तमान शेष",
+    "co2Saved": "CO₂ बचाया गया",
+    "withdrawSoon": "जल्द निकालें",
+    "thisMonth": "इस महीने",
+    "distance": "दूरी"
+  },
+  "activity": {
+    "recentActivity": "हाल की गतिविधि",
+    "rewardEarned": "पुरस्कार अर्जित",
+    "active": "सक्रिय",
+    "pending": "लंबित",
+    "completed": "पूर्ण"
+  },
+  "badge": {
+    "ecoWarrior": "पर्यावरण योद्धा",
+    "description": "आपने इस महीने {co2} किग्रा CO₂ बचाया है!"
+  },
+  "navigation": {
+    "wallet": "वॉलेट",
+    "upload": "अपलोड",
+    "history": "इतिहास",
+    "profile": "प्रोफ़ाइल"
+  },
+  "upload": {
+    "title": "ओडोमीटर अपलोड करें",
+    "takePhoto": "फोटो लें",
+    "retake": "फिर से लें",
+    "processing": "प्रसंस्करण...",
+    "submit": "रीडिंग जमा करें",
+    "manualEntry": "मैन्युअल प्रविष्टि",
+    "enterKm": "किमी रीडिंग दर्ज करें",
+    "vehicleNumber": "वाहन संख्या"
+  },
+  "register": {
+    "title": "वाहन पंजीकृत करें",
+    "name": "पूरा नाम",
+    "phone": "फोन नंबर",
+    "vehicleNumber": "वाहन संख्या",
+    "rcPhoto": "आरसी फोटो",
+    "register": "पंजीकरण",
+    "skip": "छोड़ें"
+  },
+  "history": {
+    "title": "पुरस्कार इतिहास",
+    "date": "दिनांक",
+    "km": "किमी",
+    "co2": "CO₂ बचाया गया",
+    "reward": "पुरस्कार",
+    "viewTx": "लेनदेन देखें"
+  },
+  "common": {
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "success": "सफलता",
+    "submit": "जमा करें",
+    "cancel": "रद्द करें",
+    "close": "बंद करें"
+  }
+}

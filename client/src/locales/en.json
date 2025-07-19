@@ -1,0 +1,64 @@
+{
+  "header": {
+    "appName": "Green Karma"
+  },
+  "wallet": {
+    "currentBalance": "Current Balance",
+    "co2Saved": "CO₂ Saved",
+    "withdrawSoon": "Withdraw Soon",
+    "thisMonth": "This Month",
+    "distance": "Distance"
+  },
+  "activity": {
+    "recentActivity": "Recent Activity",
+    "rewardEarned": "Reward Earned",
+    "active": "Active",
+    "pending": "Pending",
+    "completed": "Completed"
+  },
+  "badge": {
+    "ecoWarrior": "Eco Warrior",
+    "description": "You've saved {co2} kg CO₂ this month!"
+  },
+  "navigation": {
+    "wallet": "Wallet",
+    "upload": "Upload",
+    "history": "History",
+    "profile": "Profile"
+  },
+  "upload": {
+    "title": "Upload Odometer",
+    "takePhoto": "Take Photo",
+    "retake": "Retake",
+    "processing": "Processing...",
+    "submit": "Submit Reading",
+    "manualEntry": "Manual Entry",
+    "enterKm": "Enter KM Reading",
+    "vehicleNumber": "Vehicle Number"
+  },
+  "register": {
+    "title": "Register Vehicle",
+    "name": "Full Name",
+    "phone": "Phone Number",
+    "vehicleNumber": "Vehicle Number",
+    "rcPhoto": "RC Photo",
+    "register": "Register",
+    "skip": "Skip"
+  },
+  "history": {
+    "title": "Reward History",
+    "date": "Date",
+    "km": "KM",
+    "co2": "CO₂ Saved",
+    "reward": "Reward",
+    "viewTx": "View Transaction"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "close": "Close"
+  }
+}
