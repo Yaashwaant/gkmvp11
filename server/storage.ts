@@ -1,6 +1,6 @@
 import { users, rewards, blockchainRegistry, globalFraudDatabase, type User, type InsertUser, type Reward, type InsertReward } from "@shared/schema";
 import { db } from './db';
-import { eq, desc } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { blockchainRegistry as blockchain } from './blockchain';
 
 export interface IStorage {
@@ -40,6 +40,10 @@ export interface IStorage {
   }): Promise<void>;
   getGlobalFraudEntry(readingHash: string): Promise<any>;
   getGlobalFraudEntryByTxHash(txHash: string): Promise<any>;
+  
+  // Admin operations
+  getUsers(): Promise<User[]>;
+  getRewards(): Promise<Reward[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -182,6 +186,36 @@ export class MemStorage implements IStorage {
       monthlyReward,
       totalDistance,
     };
+  }
+
+  async getUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
+  async getRewards(): Promise<Reward[]> {
+    return Array.from(this.rewards.values());
+  }
+
+  async storeGlobalFraudEntry(entry: {
+    vehicleNumber: string;
+    reading: number;
+    appSource: string;
+    blockchainTxHash: string;
+    timestamp: Date;
+    readingHash: string;
+  }): Promise<void> {
+    // Memory storage - just store in console for now
+    console.log('Global fraud entry stored:', entry);
+  }
+
+  async getGlobalFraudEntry(readingHash: string): Promise<any> {
+    // Memory storage - return null for now
+    return null;
+  }
+
+  async getGlobalFraudEntryByTxHash(txHash: string): Promise<any> {
+    // Memory storage - return null for now
+    return null;
   }
 }
 
@@ -348,6 +382,14 @@ export class DatabaseStorage implements IStorage {
       .from(globalFraudDatabase)
       .where(eq(globalFraudDatabase.blockHash, txHash));
     return entry || null;
+  }
+
+  async getUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async getRewards(): Promise<Reward[]> {
+    return await db.select().from(rewards);
   }
 }
 

@@ -227,6 +227,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin endpoints for dashboard data
+  app.get('/api/admin/users', async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      res.json(users.sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime()));
+    } catch (error) {
+      res.status(500).json({ 
+        message: 'Failed to fetch users',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.get('/api/admin/stats', async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      const rewards = await storage.getRewards();
+      
+      const stats = {
+        totalUsers: users.length,
+        totalRewards: rewards.reduce((sum, r) => sum + r.rewardGiven, 0),
+        totalCO2Saved: rewards.reduce((sum, r) => sum + r.co2Saved, 0),
+        totalDistanceCovered: rewards.reduce((sum, r) => sum + r.km, 0),
+        totalReadings: rewards.length
+      };
+      
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ 
+        message: 'Failed to fetch stats',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.get('/api/admin/recent-rewards', async (req, res) => {
+    try {
+      const rewards = await storage.getRewards();
+      const recentRewards = rewards
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, 10);
+      res.json(recentRewards);
+    } catch (error) {
+      res.status(500).json({ 
+        message: 'Failed to fetch recent rewards',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
