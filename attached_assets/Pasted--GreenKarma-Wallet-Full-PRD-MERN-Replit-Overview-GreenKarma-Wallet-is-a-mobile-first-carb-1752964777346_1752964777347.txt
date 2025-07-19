@@ -1,0 +1,283 @@
+📝 GreenKarma Wallet – Full PRD (MERN + Replit)
+🌍 Overview
+GreenKarma Wallet is a mobile-first carbon credit reward platform for EV drivers, allowing them to:
+
+Upload odometer readings using a live camera
+
+Get rewarded based on CO₂ saved
+
+View wallet balance and history
+
+Have readings validated on blockchain
+
+Use the app in English or Hindi
+
+Built entirely on the MERN stack, hosted on Replit
+
+🧱 Tech Stack
+Layer	Tech
+Frontend	React.js (mobile-first PWA) + Tailwind CSS + getUserMedia()
+Backend	Node.js + Express.js
+Database	MongoDB (Atlas)
+Blockchain	Ethereum-compatible (Polygon or testnet)
+OCR	Tesseract.js (or Google Vision API via backend call)
+ML	Python microservice (via Flask or TensorFlow.js) OR JS fallback
+Deployment	Replit (Frontend + Backend in monorepo)
+
+📲 User Flows
+🔓 Registration / Skip Flow
+Route: /register
+
+Inputs:
+
+Name
+
+Phone
+
+Vehicle Number
+
+RC (captured via live camera)
+
+API: POST /api/register
+
+Stores user in MongoDB
+
+Adds vehicle number to blockchain for uniqueness
+
+Skip button: leads directly to /wallet (with upload/rewards disabled)
+
+📸 Odometer Upload
+Route: /upload
+
+Capture odometer via camera (live only)
+
+Inputs:
+
+Vehicle number (autofilled from profile)
+
+Live image (base64)
+
+Optional: Manual KM if OCR fails
+
+API: POST /api/upload-odometer
+
+Backend:
+
+OCR reads KM from image
+
+Compares with last KM (from blockchain & DB)
+
+Prevents duplicate rewards
+
+Calculates CO₂ saved
+
+Applies ML model (or fallback 40%) to calculate ₹ reward
+
+Stores reward in DB + logs to blockchain
+
+💼 Wallet
+Route: /wallet
+
+Shows:
+
+Current Balance (₹)
+
+Total CO₂ saved (kg)
+
+Vehicle ID
+
+Monthly reward
+
+Total distance
+
+Recent activity
+
+“Eco Warrior” badge
+
+Withdraw button → “Coming Soon” (disabled)
+
+📜 Reward History
+Route: /history
+
+Displays:
+
+Date
+
+KM reading
+
+CO₂ saved
+
+₹ rewarded
+
+Captured image
+
+txHash (linked to block explorer)
+
+🧑‍💼 Admin Panel (optional)
+Route: /admin
+
+Protected by JWT
+
+View all users, filter data, export to CSV
+
+🧪 UI Components (Mobile-First)
+Navigation Tabs (Bottom Nav):
+Wallet /wallet (default landing page)
+
+Upload /upload
+
+History /history
+
+Profile /profile
+
+Theme:
+Soft green gradients
+
+Rounded cards (Tailwind: rounded-2xl, shadow-md)
+
+Language toggle on header (EN/HI)
+
+🌐 Multilingual Support
+Use react-i18next with two locales:
+
+/locales/en.json
+
+/locales/hi.json
+
+Translatable keys:
+
+Buttons, labels, activity logs, alerts
+
+🧠 Backend API Endpoints (Express.js)
+User Registration
+http
+Copy
+Edit
+POST /api/register
+Body: { name, phone, vehicle_number, rc_image_base64 }
+Upload Odometer Image
+http
+Copy
+Edit
+POST /api/upload-odometer
+Body: { vehicle_number, odometer_image_base64, [optional_km] }
+Get Reward History
+http
+Copy
+Edit
+GET /api/reward-history?vehicle=ABC123
+🧾 MongoDB Schemas
+User
+js
+Copy
+Edit
+{
+  name: String,
+  phone: String,
+  vehicle_number: String,
+  rc_image_url: String,
+  registered_at: Date
+}
+Reward
+js
+Copy
+Edit
+{
+  vehicle_number: String,
+  odometer_img_url: String,
+  km: Number,
+  co2_saved: Number,
+  reward_given: Number,
+  tx_hash: String,
+  timestamp: Date
+}
+🔗 Blockchain Logging
+Smart Contract (Polygon Mumbai)
+
+Logs:
+
+vehicle_number
+
+km_reading
+
+timestamp
+
+txHash
+
+Contract exposes:
+
+getLastKm(vehicle_number)
+
+logReading(vehicle_number, km, timestamp)
+
+🤖 ML Reward Logic
+Uses input:
+
+CO₂ saved
+
+Market price (₹ per ton)
+
+Output:
+
+30–60% of value
+
+Ensures 30% profit margin
+
+Fallback (if offline): flat 40% of CO₂ credit value
+
+📁 Suggested File Structure
+bash
+Copy
+Edit
+greenkarma-wallet/
+├── client/                # React frontend
+│   ├── components/        # Navbar, CameraCapture, etc.
+│   ├── locales/           # en.json, hi.json
+│   ├── pages/             # Wallet, Upload, History, Register
+│   └── App.jsx            # Routes
+├── server/                # Express backend
+│   ├── controllers/
+│   ├── routes/
+│   ├── models/
+│   ├── utils/             # OCR, ML, blockchain
+│   └── index.js
+├── smart-contracts/       # Solidity files (optional)
+├── README.md
+✅ Replit Configuration
+React + Express (Monorepo):
+In Replit → Create a Node.js Repl
+
+Set up concurrently to run both client & server:
+
+bash
+Copy
+Edit
+npm install concurrently nodemon --save-dev
+Add start script:
+
+json
+Copy
+Edit
+"scripts": {
+  "client": "cd client && npm start",
+  "server": "cd server && nodemon index.js",
+  "dev": "concurrently \"npm run client\" \"npm run server\""
+}
+Use Replit secrets for API keys and Mongo URI:
+
+MONGO_URI
+
+VISION_API_KEY
+
+PRIVATE_KEY (for blockchain)
+
+🎯 MVP Scope
+✅ Registration + Skip
+✅ Odometer Upload (camera only)
+✅ OCR + Manual fallback
+✅ CO₂ + ₹ Calculation
+✅ Wallet UI
+✅ Reward history
+✅ Blockchain logging
+✅ Language toggle
+✅ Mobile-first responsive design
