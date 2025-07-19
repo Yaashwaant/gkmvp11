@@ -114,89 +114,147 @@ export default function Upload() {
 
   return (
     <div className="max-w-md mx-auto bg-gradient-to-br from-gray-50 via-green-50/30 to-emerald-50/40 min-h-screen relative">
-      <Header />
+      {!showCamera && <Header />}
       
-      <div className="px-4 pb-24">
+      <div className={showCamera ? "" : "px-4 pb-24"}>
         {showCamera ? (
-          <div className="space-y-4">
-            <div className="text-center mb-6">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('upload.title')}</h1>
-              <p className="text-gray-600">Position your odometer within the frame</p>
+          <div className="fixed inset-0 bg-black z-50">
+            {/* Header */}
+            <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/70 to-transparent p-4 pt-8">
+              <div className="flex items-center justify-between text-white">
+                <button 
+                  onClick={() => window.history.back()}
+                  className="p-2 rounded-full bg-black/30 backdrop-blur-sm"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                
+                <div className="text-center">
+                  <h1 className="text-lg font-semibold">Scan Odometer</h1>
+                  <p className="text-sm text-gray-300">Position within the frame</p>
+                </div>
+                
+                <div className="w-10 h-10"></div> {/* Spacer */}
+              </div>
             </div>
-            
-            <div className="relative">
+
+            {/* Camera with UPI-style overlay */}
+            <div className="relative h-full">
               <CameraCapture 
                 onCapture={handleImageCapture}
                 isProcessing={isProcessingOCR || uploadMutation.isPending}
+                fullScreen={true}
               />
               
-              {/* Overlay rectangle guide */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-3/4 h-32 border-4 border-green-500 rounded-lg bg-transparent shadow-lg">
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                      Align odometer here
-                    </span>
+              {/* UPI-style scanner overlay */}
+              <div className="absolute inset-0 pointer-events-none">
+                {/* Dark overlay with cut-out */}
+                <div className="absolute inset-0 bg-black/60">
+                  <div className="absolute inset-x-8 top-1/2 transform -translate-y-1/2 h-40 bg-transparent border-2 border-white rounded-xl shadow-2xl">
+                    {/* Corner indicators */}
+                    <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-green-400 rounded-tl-lg"></div>
+                    <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-green-400 rounded-tr-lg"></div>
+                    <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-green-400 rounded-bl-lg"></div>
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-green-400 rounded-br-lg"></div>
                   </div>
+                </div>
+                
+                {/* Instruction text */}
+                <div className="absolute bottom-32 left-0 right-0 text-center text-white px-8">
+                  <p className="text-lg font-medium mb-2">Position odometer reading in frame</p>
+                  <p className="text-sm text-gray-300">Make sure the numbers are clearly visible</p>
                 </div>
               </div>
             </div>
           </div>
         ) : (
-          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-center">Confirm Reading</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <div className="fixed inset-0 bg-white z-50">
+            {/* Header */}
+            <div className="bg-white shadow-sm p-4 border-b">
+              <div className="flex items-center justify-between">
+                <button 
+                  onClick={() => setShowCamera(true)}
+                  className="p-2 rounded-full bg-gray-100"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                
+                <h1 className="text-lg font-semibold">Confirm Reading</h1>
+                
+                <div className="w-10 h-10"></div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-4 space-y-6">
+              {/* Captured image preview */}
+              {capturedImage && (
+                <div className="bg-gray-50 rounded-2xl p-4">
+                  <img 
+                    src={capturedImage} 
+                    alt="Captured odometer" 
+                    className="w-full h-48 object-cover rounded-xl"
+                  />
+                </div>
+              )}
+
               <div>
-                <Label>{t('upload.vehicleNumber')}</Label>
-                <Input value={DEMO_VEHICLE} disabled className="mt-1 bg-gray-50" />
+                <Label className="text-base font-medium">{t('upload.vehicleNumber')}</Label>
+                <div className="mt-2 p-4 bg-gray-50 rounded-xl">
+                  <span className="text-lg font-mono">{DEMO_VEHICLE}</span>
+                </div>
               </div>
 
               {capturedImage && (
                 <div>
-                  <Label htmlFor="km-reading">{t('upload.enterKm')}</Label>
+                  <Label htmlFor="km-reading" className="text-base font-medium">{t('upload.enterKm')}</Label>
                   <Input
                     id="km-reading"
                     type="number"
                     value={manualReading}
                     onChange={(e) => setManualReading(e.target.value)}
                     placeholder="Enter kilometer reading"
-                    className="mt-1 text-lg font-medium"
+                    className="mt-2 text-2xl font-mono text-center py-4 border-2 rounded-xl"
                   />
                   {ocrReading && (
-                    <p className="text-sm text-green-600 mt-1 flex items-center">
-                      <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                      OCR detected: {ocrReading} km
-                    </p>
+                    <div className="mt-2 p-3 bg-green-50 rounded-lg flex items-center">
+                      <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                      <span className="text-green-700 font-medium">Auto-detected: {ocrReading} km</span>
+                    </div>
                   )}
                 </div>
               )}
+            </div>
 
-              <div className="flex space-x-3">
+            {/* Bottom action */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t">
+              {capturedImage && manualReading && (
                 <Button 
-                  onClick={() => setShowCamera(true)}
-                  variant="outline"
-                  className="flex-1"
+                  onClick={handleSubmit}
+                  disabled={uploadMutation.isPending}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-4 rounded-xl text-lg"
+                  size="lg"
                 >
-                  Retake Photo
+                  {uploadMutation.isPending ? (
+                    <div className="flex items-center">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      {t('upload.processing')}
+                    </div>
+                  ) : (
+                    t('upload.submit')
+                  )}
                 </Button>
-                {capturedImage && manualReading && (
-                  <Button 
-                    onClick={handleSubmit}
-                    disabled={uploadMutation.isPending}
-                    className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600"
-                  >
-                    {uploadMutation.isPending ? t('upload.processing') : t('upload.submit')}
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+              )}
+            </div>
+          </div>
         )}
       </div>
       
-      <BottomNavigation />
+      {!showCamera && <BottomNavigation />}
     </div>
   );
 }

@@ -7,9 +7,10 @@ import { useLanguage } from '@/hooks/useLanguage';
 interface CameraCaptureProps {
   onCapture: (imageData: string) => void;
   isProcessing?: boolean;
+  fullScreen?: boolean;
 }
 
-export function CameraCapture({ onCapture, isProcessing = false }: CameraCaptureProps) {
+export function CameraCapture({ onCapture, isProcessing = false, fullScreen = false }: CameraCaptureProps) {
   const { t } = useLanguage();
   const [isActive, setIsActive] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -165,6 +166,44 @@ export function CameraCapture({ onCapture, isProcessing = false }: CameraCapture
   }
 
   if (isActive) {
+    if (fullScreen) {
+      return (
+        <>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="absolute inset-0 w-full h-full object-cover"
+            onLoadedData={() => setIsVideoReady(true)}
+            onError={(e) => setError(`Video error: ${e.currentTarget.error?.message || 'Unknown error'}`)}
+          />
+          
+          {!isVideoReady && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black">
+              <div className="text-center text-white">
+                <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-lg">Starting Camera...</p>
+              </div>
+            </div>
+          )}
+
+          {/* UPI-style capture button */}
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+            <button
+              onClick={handleCapture}
+              disabled={!isVideoReady}
+              className="w-20 h-20 bg-white rounded-full shadow-2xl flex items-center justify-center disabled:opacity-50 active:scale-95 transition-transform"
+            >
+              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center">
+                <Camera className="w-8 h-8 text-white" />
+              </div>
+            </button>
+          </div>
+        </>
+      );
+    }
+
     return (
       <div className="space-y-4">
         <div className="aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl relative">
