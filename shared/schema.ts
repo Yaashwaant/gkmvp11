@@ -19,6 +19,9 @@ export const rewards = pgTable("rewards", {
   co2Saved: real("co2_saved").notNull(),
   rewardGiven: real("reward_given").notNull(),
   txHash: text("tx_hash"),
+  location: text("location"), // JSON string for lat,lng,accuracy
+  ocrConfidence: real("ocr_confidence"), 
+  validationStatus: text("validation_status").notNull().default("pending"), // pending, approved, rejected
   timestamp: timestamp("timestamp").defaultNow().notNull(),
 });
 

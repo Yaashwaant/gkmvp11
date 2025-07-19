@@ -81,7 +81,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { vehicleNumber } = req.params;
       
+      console.log('Getting wallet data for vehicle:', vehicleNumber);
       const user = await storage.getUserByVehicleNumber(vehicleNumber);
+      console.log('User found:', user);
+      
       if (!user) {
         return res.status(404).json({ 
           message: "Vehicle not found" 
@@ -95,7 +98,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...totals,
       });
     } catch (error) {
-      res.status(500).json({ message: "Internal server error" });
+      console.error('Wallet API error:', error);
+      res.status(500).json({ message: "Internal server error", details: error.message });
     }
   });
 

@@ -98,6 +98,9 @@ export class MemStorage implements IStorage {
     const reward: Reward = { 
       ...insertReward, 
       txHash: insertReward.txHash || null,
+      location: insertReward.location || null,
+      ocrConfidence: insertReward.ocrConfidence || null,
+      validationStatus: insertReward.validationStatus || "pending",
       id, 
       timestamp: new Date() 
     };

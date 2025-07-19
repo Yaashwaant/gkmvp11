@@ -9,7 +9,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/hooks/useLanguage';
-import { extractOdometerReading } from '@/lib/ocr';
+import { extractOdometerReading, validateOdometerReading, type OCRResult } from '@/lib/ocr';
+import { getCurrentLocation, validateLocationChange, type LocationData } from '@/lib/geolocation';
+import { notificationService } from '@/lib/notifications';
 import { apiRequest } from '@/lib/queryClient';
 
 const DEMO_VEHICLE = 'DEMO4774';
@@ -19,10 +21,12 @@ export default function Upload() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [ocrReading, setOcrReading] = useState<number | null>(null);
+  const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
   const [manualReading, setManualReading] = useState<string>('');
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
   const [showCamera, setShowCamera] = useState(true);
+  const [locationData, setLocationData] = useState<LocationData | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
 
   // Auto-start camera when component mounts
   useEffect(() => {
@@ -34,20 +38,30 @@ export default function Upload() {
       vehicleNumber: string;
       odometerImageUrl: string;
       km: number;
+      location?: string;
+      ocrConfidence?: number;
+      validationStatus?: string;
     }) => {
       const response = await apiRequest('POST', '/api/upload-odometer', data);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const reward = data.reward;
+      
+      // Show success notification
+      notificationService.showRewardNotification(reward.rewardGiven, reward.co2Saved);
+      
       toast({
         title: t('common.success'),
-        description: 'Odometer reading uploaded successfully!',
+        description: `Earned ₹${reward.rewardGiven} for saving ${reward.co2Saved}kg CO₂!`,
       });
       
       // Reset form
       setCapturedImage(null);
-      setOcrReading(null);
+      setOcrResult(null);
       setManualReading('');
+      setLocationData(null);
+      setShowCamera(true);
       
       // Invalidate wallet data to refresh balance
       queryClient.invalidateQueries({ queryKey: ['/api/wallet'] });
