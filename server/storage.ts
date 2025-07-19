@@ -1,4 +1,6 @@
 import { users, rewards, type User, type InsertUser, type Reward, type InsertReward } from "@shared/schema";
+import { db } from './db';
+import { eq, desc } from 'drizzle-orm';
 
 export interface IStorage {
   // User operations
@@ -132,4 +134,82 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async getUser(id: number): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByVehicleNumber(vehicleNumber: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.vehicleNumber, vehicleNumber));
+    return user || undefined;
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async getRewardsByVehicleNumber(vehicleNumber: string): Promise<Reward[]> {
+    return await db.select().from(rewards).where(eq(rewards.vehicleNumber, vehicleNumber));
+  }
+
+  async getLastRewardByVehicleNumber(vehicleNumber: string): Promise<Reward | undefined> {
+    const [reward] = await db
+      .select()
+      .from(rewards)
+      .where(eq(rewards.vehicleNumber, vehicleNumber))
+      .orderBy(desc(rewards.timestamp))
+      .limit(1);
+    return reward || undefined;
+  }
+
+  async createReward(insertReward: InsertReward): Promise<Reward> {
+    const [reward] = await db
+      .insert(rewards)
+      .values(insertReward)
+      .returning();
+    return reward;
+  }
+
+  async getTotalRewardsByVehicleNumber(vehicleNumber: string): Promise<{
+    totalBalance: number;
+    totalCo2Saved: number;
+    monthlyReward: number;
+    totalDistance: number;
+  }> {
+    const userRewards = await this.getRewardsByVehicleNumber(vehicleNumber);
+    
+    const totalBalance = userRewards.reduce((sum, reward) => sum + reward.rewardGiven, 0);
+    const totalCo2Saved = userRewards.reduce((sum, reward) => sum + reward.co2Saved, 0);
+    
+    // Calculate monthly reward (current month)
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const monthlyReward = userRewards
+      .filter(reward => {
+        const rewardDate = new Date(reward.timestamp);
+        return rewardDate.getMonth() === currentMonth && rewardDate.getFullYear() === currentYear;
+      })
+      .reduce((sum, reward) => sum + reward.rewardGiven, 0);
+
+    // Calculate total distance
+    const sortedRewards = userRewards.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    let totalDistance = 0;
+    for (let i = 1; i < sortedRewards.length; i++) {
+      const prevKm = sortedRewards[i - 1].km;
+      const currentKm = sortedRewards[i].km;
+      if (currentKm > prevKm) {
+        totalDistance += currentKm - prevKm;
+      }
+    }
+
+    return { totalBalance, totalCo2Saved, monthlyReward, totalDistance };
+  }
+}
+
+// Use database storage instead of memory storage
+export const storage = process.env.DATABASE_URL ? new DatabaseStorage() : new MemStorage();
