@@ -41,20 +41,15 @@ export default function Register() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: z.infer<typeof formSchema>) => {
-      return await apiRequest('/api/users', {
-        method: 'POST',
-        body: JSON.stringify(data),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiRequest('POST', '/api/register', data);
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Registration Successful!",
         description: "Welcome to GreenKarma Wallet. Start earning rewards for your eco-friendly driving.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/wallet'] });
       // Navigate to wallet page
       window.location.href = '/wallet';
     },
