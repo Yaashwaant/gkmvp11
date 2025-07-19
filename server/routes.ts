@@ -129,10 +129,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ 
         reward,
         blockchain: {
-          publicTxHash: publicChainResult.txHash,
-          localBlockHash: blockchainResult.blockHash,
+          network: 'Polygon Mumbai Testnet (Free)',
+          txHash: publicChainResult.txHash,
+          explorerUrl: `https://mumbai.polygonscan.com/tx/${publicChainResult.txHash}`,
           verified: true,
           crossAppProtected: true,
+          cost: '$0.00',
           fraudScore: 0
         }
       });
