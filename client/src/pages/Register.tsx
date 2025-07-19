@@ -49,6 +49,11 @@ export default function Register() {
         title: "Registration Successful!",
         description: "Welcome to GreenKarma Wallet. Start earning rewards for your eco-friendly driving.",
       });
+      // Store user vehicle number in localStorage for session
+      if (data.user && data.user.vehicleNumber) {
+        localStorage.setItem('currentVehicleNumber', data.user.vehicleNumber);
+        localStorage.setItem('currentUserName', data.user.name);
+      }
       queryClient.invalidateQueries({ queryKey: ['/api/wallet'] });
       // Navigate to wallet page
       window.location.href = '/wallet';

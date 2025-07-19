@@ -14,12 +14,16 @@ import { getCurrentLocation, validateLocationChange, type LocationData } from '@
 import { notificationService } from '@/lib/notifications';
 import { apiRequest } from '@/lib/queryClient';
 
-const DEMO_VEHICLE = 'DEMO4774';
+// Get current user's vehicle number
+const getCurrentVehicleNumber = () => {
+  return localStorage.getItem('currentVehicleNumber') || 'DEMO4774';
+};
 
 export default function Upload() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const currentVehicle = getCurrentVehicleNumber();
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [ocrResult, setOcrResult] = useState<OCRResult | null>(null);
   const [manualReading, setManualReading] = useState<string>('');
@@ -42,7 +46,9 @@ export default function Upload() {
       ocrConfidence?: number;
       validationStatus?: string;
     }) => {
-      const response = await apiRequest('POST', '/api/upload-odometer', data);
+      // Use current user's vehicle number instead of hardcoded one
+      const uploadData = { ...data, vehicleNumber: currentVehicle };
+      const response = await apiRequest('POST', '/api/upload-odometer', uploadData);
       return response.json();
     },
     onSuccess: (data) => {
@@ -120,7 +126,7 @@ export default function Upload() {
     }
 
     uploadMutation.mutate({
-      vehicleNumber: DEMO_VEHICLE,
+      vehicleNumber: currentVehicle,
       odometerImageUrl: capturedImage,
       km: reading,
     });
@@ -219,7 +225,7 @@ export default function Upload() {
               <div>
                 <Label className="text-base font-medium">{t('upload.vehicleNumber')}</Label>
                 <div className="mt-2 p-4 bg-gray-50 rounded-xl">
-                  <span className="text-lg font-mono">{DEMO_VEHICLE}</span>
+                  <span className="text-lg font-mono">{currentVehicle}</span>
                 </div>
               </div>
 

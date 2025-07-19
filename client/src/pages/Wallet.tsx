@@ -7,11 +7,21 @@ import { EcoWarriorBadge } from '@/components/EcoWarriorBadge';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const DEMO_VEHICLE = 'DEMO4774';
+// Get current user's vehicle number from localStorage or fallback to demo
+const getCurrentVehicleNumber = () => {
+  return localStorage.getItem('currentVehicleNumber') || 'DEMO4774';
+};
+
+const getCurrentUserName = () => {
+  return localStorage.getItem('currentUserName') || 'Demo User';
+};
 
 export default function Wallet() {
+  const currentVehicle = getCurrentVehicleNumber();
+  const currentUserName = getCurrentUserName();
+
   const { data: walletData, isLoading } = useQuery({
-    queryKey: ['/api/wallet', DEMO_VEHICLE],
+    queryKey: [`/api/wallet/${currentVehicle}`],
   });
 
   if (isLoading) {
@@ -36,7 +46,7 @@ export default function Wallet() {
     {
       id: 1,
       type: 'reward',
-      vehicleId: walletData?.user?.vehicleNumber || DEMO_VEHICLE,
+      vehicleId: walletData?.user?.vehicleNumber || currentVehicle,
       status: 'active' as const,
       timestamp: new Date(),
     }
@@ -47,21 +57,21 @@ export default function Wallet() {
       <Header />
       
       <WalletCard 
-        balance={walletData?.totalBalance || 24}
-        co2Saved={walletData?.totalCo2Saved || 12.0}
-        vehicleId={walletData?.user?.vehicleNumber || DEMO_VEHICLE}
+        balance={walletData?.totalBalance || 0}
+        co2Saved={walletData?.totalCo2Saved || 0}
+        vehicleId={walletData?.user?.vehicleNumber || currentVehicle}
       />
       
       <StatsCards 
-        monthlyReward={walletData?.monthlyReward || 10}
-        totalDistance={walletData?.totalDistance || 100}
+        monthlyReward={walletData?.monthlyReward || 0}
+        totalDistance={walletData?.totalDistance || 0}
       />
       
       <RecentActivity activities={activities} />
       
       <EcoWarriorBadge 
-        co2Saved={walletData?.totalCo2Saved || 12.0}
-        progress={60}
+        co2Saved={walletData?.totalCo2Saved || 0}
+        progress={Math.min(((walletData?.totalCo2Saved || 0) / 50) * 100, 100)}
       />
       
       <BottomNavigation />
