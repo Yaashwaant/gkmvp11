@@ -1,6 +1,7 @@
-import { users, rewards, type User, type InsertUser, type Reward, type InsertReward } from "@shared/schema";
+import { users, rewards, blockchainRegistry, globalFraudDatabase, type User, type InsertUser, type Reward, type InsertReward } from "@shared/schema";
 import { db } from './db';
 import { eq, desc } from 'drizzle-orm';
+import { blockchainRegistry as blockchain } from './blockchain';
 
 export interface IStorage {
   // User operations
@@ -18,6 +19,15 @@ export interface IStorage {
     monthlyReward: number;
     totalDistance: number;
   }>;
+
+  // Blockchain operations
+  createUserBlockchain(vehicleNumber: string, userId: number): Promise<void>;
+  validateOdometerReading(vehicleNumber: string, reading: number, validationData: any): Promise<{
+    isValid: boolean;
+    blockHash?: string;
+    fraudAlert?: string;
+  }>;
+  getBlockchainSummary(vehicleNumber: string): Promise<any>;
 }
 
 export class MemStorage implements IStorage {
@@ -79,7 +89,33 @@ export class MemStorage implements IStorage {
       registeredAt: new Date() 
     };
     this.users.set(id, user);
+    
+    // Create blockchain for the user
+    await blockchain.createUserChain(user.vehicleNumber, user.id);
+    
     return user;
+  }
+
+  async createUserBlockchain(vehicleNumber: string, userId: number): Promise<void> {
+    await blockchain.createUserChain(vehicleNumber, userId);
+  }
+
+  async validateOdometerReading(vehicleNumber: string, reading: number, validationData: any): Promise<{
+    isValid: boolean;
+    blockHash?: string;
+    fraudAlert?: string;
+  }> {
+    return await blockchain.addOdometerReading(
+      vehicleNumber,
+      reading,
+      validationData.imageHash || '',
+      validationData.location || '',
+      validationData.validationProof || {}
+    );
+  }
+
+  async getBlockchainSummary(vehicleNumber: string): Promise<any> {
+    return blockchain.getUserChainSummary(vehicleNumber);
   }
 
   async getRewardsByVehicleNumber(vehicleNumber: string): Promise<Reward[]> {
@@ -153,7 +189,62 @@ export class DatabaseStorage implements IStorage {
       .insert(users)
       .values(insertUser)
       .returning();
+    
+    // Create blockchain for the user
+    await this.createUserBlockchain(user.vehicleNumber, user.id);
+    
     return user;
+  }
+
+  async createUserBlockchain(vehicleNumber: string, userId: number): Promise<void> {
+    // Create blockchain in memory
+    const userChain = await blockchain.createUserChain(vehicleNumber, userId);
+    
+    // Store blockchain data in database
+    await db.insert(blockchainRegistry).values({
+      vehicleNumber,
+      userId,
+      chainData: JSON.stringify(userChain.chain),
+      fraudScore: userChain.fraudScore,
+      isActive: userChain.isActive,
+      lastValidReading: userChain.lastValidReading
+    });
+  }
+
+  async validateOdometerReading(vehicleNumber: string, reading: number, validationData: any): Promise<{
+    isValid: boolean;
+    blockHash?: string;
+    fraudAlert?: string;
+  }> {
+    const result = await blockchain.addOdometerReading(
+      vehicleNumber,
+      reading,
+      validationData.imageHash || '',
+      validationData.location || '',
+      validationData.validationProof || {}
+    );
+
+    // Update blockchain registry in database if successful
+    if (result.success) {
+      const chainSummary = blockchain.getUserChainSummary(vehicleNumber);
+      if (chainSummary) {
+        await db
+          .update(blockchainRegistry)
+          .set({
+            chainData: JSON.stringify(blockchain.exportChain(vehicleNumber)?.chain || []),
+            fraudScore: chainSummary.fraudScore,
+            lastValidReading: chainSummary.lastValidReading,
+            updatedAt: new Date()
+          })
+          .where(eq(blockchainRegistry.vehicleNumber, vehicleNumber));
+      }
+    }
+
+    return result;
+  }
+
+  async getBlockchainSummary(vehicleNumber: string): Promise<any> {
+    return blockchain.getUserChainSummary(vehicleNumber);
   }
 
   async getRewardsByVehicleNumber(vehicleNumber: string): Promise<Reward[]> {

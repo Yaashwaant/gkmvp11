@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertRewardSchema } from "@shared/schema";
 import { z } from "zod";
+import { generateImageHash, generateDeviceFingerprint, extractImageMetadata, validateLocationAccuracy } from "./utils/crypto";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // User registration
@@ -31,16 +32,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Upload odometer reading
+  // Upload odometer reading with blockchain validation
   app.post("/api/upload-odometer", async (req, res) => {
     try {
       const rewardData = insertRewardSchema.parse(req.body);
+      const { imageData, location, ocrConfidence } = req.body;
       
       // Verify vehicle exists
       const user = await storage.getUserByVehicleNumber(rewardData.vehicleNumber);
       if (!user) {
         return res.status(404).json({ 
           message: "Vehicle not found" 
+        });
+      }
+
+      // Generate validation data for blockchain
+      const imageHash = generateImageHash(imageData || rewardData.odometerImageUrl);
+      const deviceFingerprint = generateDeviceFingerprint(
+        req.headers['user-agent'] || '', 
+        req.ip || ''
+      );
+      const imageMetadata = extractImageMetadata(imageData || '');
+      const locationAccuracy = validateLocationAccuracy(location || '{}');
+
+      const validationProof = {
+        ocrConfidence: parseFloat(ocrConfidence || '0.8'),
+        locationAccuracy,
+        timeStamp: new Date(),
+        deviceFingerprint,
+        imageMetadata
+      };
+
+      const validationData = {
+        imageHash,
+        location: location || '',
+        validationProof
+      };
+
+      // Blockchain validation
+      const blockchainResult = await storage.validateOdometerReading(
+        rewardData.vehicleNumber,
+        rewardData.km,
+        validationData
+      );
+
+      if (!blockchainResult.isValid) {
+        return res.status(400).json({ 
+          message: "Fraud detected: " + blockchainResult.fraudAlert,
+          fraudAlert: true,
+          blockchainSummary: await storage.getBlockchainSummary(rewardData.vehicleNumber)
         });
       }
       
@@ -52,19 +92,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Calculate CO2 saved and reward (simplified calculation)
-      const kmDiff = lastReward ? rewardData.km - lastReward.km : 100; // Default 100km for first reading
-      const co2Saved = kmDiff * 0.12; // 120g CO2 per km saved (EV vs ICE)
+      // Calculate CO2 saved and reward
+      const kmDiff = lastReward ? rewardData.km - lastReward.km : 100;
+      const co2Saved = kmDiff * 0.12; // 120g CO2 per km saved
       const rewardAmount = co2Saved * 2; // ₹2 per kg CO2
       
+      // Create reward with blockchain data
       const reward = await storage.createReward({
         ...rewardData,
         co2Saved,
         rewardGiven: rewardAmount,
-        txHash: `0x${Math.random().toString(16).substr(2, 40)}`, // Mock transaction hash
+        txHash: blockchainResult.blockHash || `0x${Math.random().toString(16).substr(2, 40)}`,
+        blockHash: blockchainResult.blockHash,
+        deviceFingerprint,
+        imageHash,
+        fraudScore: 0, // Valid reading gets 0 fraud score
       });
       
-      res.json({ reward });
+      res.json({ 
+        reward,
+        blockchain: {
+          blockHash: blockchainResult.blockHash,
+          verified: true,
+          fraudScore: 0
+        }
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
@@ -128,6 +180,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json({ user });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get blockchain summary for a vehicle
+  app.get("/api/blockchain/:vehicleNumber", async (req, res) => {
+    try {
+      const { vehicleNumber } = req.params;
+      
+      const user = await storage.getUserByVehicleNumber(vehicleNumber);
+      if (!user) {
+        return res.status(404).json({ message: "Vehicle not found" });
+      }
+
+      const blockchainSummary = await storage.getBlockchainSummary(vehicleNumber);
+      res.json({ blockchainSummary });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Verify blockchain integrity for a vehicle
+  app.post("/api/blockchain/verify/:vehicleNumber", async (req, res) => {
+    try {
+      const { vehicleNumber } = req.params;
+      
+      const user = await storage.getUserByVehicleNumber(vehicleNumber);
+      if (!user) {
+        return res.status(404).json({ message: "Vehicle not found" });
+      }
+
+      const blockchainSummary = await storage.getBlockchainSummary(vehicleNumber);
+      if (!blockchainSummary) {
+        return res.status(404).json({ message: "No blockchain found" });
+      }
+
+      res.json({ 
+        verified: blockchainSummary.chainIntegrity.isValid,
+        errors: blockchainSummary.chainIntegrity.errors,
+        summary: blockchainSummary
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get global fraud database entries for a vehicle (admin endpoint)
+  app.get("/api/admin/fraud-check/:vehicleNumber", async (req, res) => {
+    try {
+      const { vehicleNumber } = req.params;
+      // This would query the global fraud database
+      // For demo purposes, return mock data
+      res.json({
+        vehicleNumber,
+        globalEntries: [],
+        riskLevel: "LOW",
+        crossAppDuplicates: false
+      });
     } catch (error) {
       res.status(500).json({ message: "Internal server error" });
     }
