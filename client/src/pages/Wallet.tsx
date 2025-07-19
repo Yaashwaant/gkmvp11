@@ -43,7 +43,7 @@ export default function Wallet() {
   ];
 
   return (
-    <div className="max-w-md mx-auto bg-gray-50 min-h-screen relative">
+    <div className="max-w-md mx-auto bg-gradient-to-br from-gray-50 via-green-50/30 to-emerald-50/40 min-h-screen relative">
       <Header />
       
       <WalletCard 

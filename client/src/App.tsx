@@ -17,7 +17,6 @@ function Router() {
       <Route path="/wallet" component={Wallet} />
       <Route path="/upload" component={Upload} />
       <Route path="/history" component={History} />
-      <Route path="/register" component={Register} />
       <Route component={NotFound} />
     </Switch>
   );

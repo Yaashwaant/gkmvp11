@@ -116,7 +116,7 @@ export function CameraCapture({ onCapture, isProcessing = false }: CameraCapture
   if (isActive) {
     return (
       <div className="space-y-4">
-        <div className="aspect-video bg-black rounded-lg overflow-hidden">
+        <div className="aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl relative">
           <video
             ref={videoRef}
             autoPlay
@@ -125,9 +125,13 @@ export function CameraCapture({ onCapture, isProcessing = false }: CameraCapture
             className="w-full h-full object-cover"
           />
         </div>
-        <Button onClick={handleCapture} className="w-full">
-          <Camera className="w-4 h-4 mr-2" />
-          Capture
+        <Button 
+          onClick={handleCapture} 
+          className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-4 rounded-xl shadow-lg"
+          size="lg"
+        >
+          <Camera className="w-5 h-5 mr-2" />
+          Capture Odometer
         </Button>
       </div>
     );
@@ -135,12 +139,16 @@ export function CameraCapture({ onCapture, isProcessing = false }: CameraCapture
 
   return (
     <div className="text-center p-8">
-      <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <Camera className="w-12 h-12 text-gray-400" />
+      <div className="w-32 h-32 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+        <Camera className="w-16 h-16 text-green-600" />
       </div>
-      <p className="text-gray-600 mb-4">Position your phone camera over the odometer</p>
-      <Button onClick={handleStartCamera} className="w-full">
-        <Camera className="w-4 h-4 mr-2" />
+      <p className="text-gray-700 mb-6 text-lg">Position your phone camera over the odometer</p>
+      <Button 
+        onClick={handleStartCamera} 
+        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold py-4 rounded-xl shadow-lg"
+        size="lg"
+      >
+        <Camera className="w-5 h-5 mr-2" />
         {t('upload.takePhoto')}
       </Button>
     </div>

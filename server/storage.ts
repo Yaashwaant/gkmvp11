@@ -72,6 +72,7 @@ export class MemStorage implements IStorage {
     const id = this.currentUserId++;
     const user: User = { 
       ...insertUser, 
+      rcImageUrl: insertUser.rcImageUrl || null,
       id, 
       registeredAt: new Date() 
     };
@@ -94,6 +95,7 @@ export class MemStorage implements IStorage {
     const id = this.currentRewardId++;
     const reward: Reward = { 
       ...insertReward, 
+      txHash: insertReward.txHash || null,
       id, 
       timestamp: new Date() 
     };

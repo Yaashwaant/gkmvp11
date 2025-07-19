@@ -11,16 +11,16 @@ export function StatsCards({ monthlyReward, totalDistance }: StatsCardsProps) {
   return (
     <div className="px-4 mb-6">
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white rounded-2xl shadow-md p-4 text-center">
-          <div className="w-12 h-12 bg-blue-500 rounded-full mx-auto mb-3"></div>
-          <p className="text-sm text-gray-500 mb-1">{t('wallet.thisMonth')}</p>
-          <p className="text-xl font-bold text-gray-900">₹{monthlyReward}</p>
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-6 text-center border border-white/20">
+          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full mx-auto mb-4 shadow-lg"></div>
+          <p className="text-sm text-gray-500 mb-2">{t('wallet.thisMonth')}</p>
+          <p className="text-2xl font-bold text-gray-900">₹{monthlyReward}</p>
         </div>
         
-        <div className="bg-white rounded-2xl shadow-md p-4 text-center">
-          <div className="w-12 h-12 bg-violet-500 rounded-full mx-auto mb-3"></div>
-          <p className="text-sm text-gray-500 mb-1">{t('wallet.distance')}</p>
-          <p className="text-xl font-bold text-gray-900">{totalDistance} km</p>
+        <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-6 text-center border border-white/20">
+          <div className="w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full mx-auto mb-4 shadow-lg"></div>
+          <p className="text-sm text-gray-500 mb-2">{t('wallet.distance')}</p>
+          <p className="text-2xl font-bold text-gray-900">{totalDistance} km</p>
         </div>
       </div>
     </div>

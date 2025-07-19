@@ -29,7 +29,7 @@ export function BottomNavigation() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200">
+    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg">
       <div className="flex items-center justify-around py-2">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -39,9 +39,9 @@ export function BottomNavigation() {
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className="flex flex-col items-center py-2 px-4 bg-green-primary text-white rounded-full"
+                className="flex flex-col items-center py-3 px-6 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full shadow-lg transform -translate-y-2 border-4 border-white"
               >
-                <Icon className="w-5 h-5 mb-1" />
+                <Icon className="w-6 h-6 mb-1" />
                 <span className="text-xs font-medium">{item.label}</span>
               </button>
             );

@@ -11,8 +11,9 @@ export function WalletCard({ balance, co2Saved, vehicleId }: WalletCardProps) {
 
   return (
     <div className="px-4 mb-6">
-      <div className="wallet-card-bg rounded-2xl shadow-md p-6 text-white relative overflow-hidden">
+      <div className="wallet-card-bg rounded-3xl shadow-2xl p-6 text-white relative overflow-hidden">
         <div className="absolute top-4 right-4 w-24 h-24 bg-white bg-opacity-10 rounded-full"></div>
+        <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-white bg-opacity-5 rounded-full"></div>
         
         <div className="relative z-10">
           <div className="mb-6">
